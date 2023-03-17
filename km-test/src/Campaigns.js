@@ -7,21 +7,21 @@ import InputBase from '@mui/material/InputBase';
 import Drawer from '@mui/material/Drawer';
 import MuiAppBar from '@mui/material/AppBar';
 import CssBaseline from '@mui/material/CssBaseline';
-import List from '@mui/material/List';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
-
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 import './Campaigns.css';
+
+dayjs.extend(customParseFormat);
+
 
 const columns = [
   {
@@ -109,7 +109,7 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
     }),
   }),
 );
-const drawerWidth = 240;
+const drawerWidth = 340;
 
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
@@ -132,14 +132,21 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   padding: theme.spacing(0, 1),
-  // necessary for content to be below app bar
   ...theme.mixins.toolbar,
   justifyContent: 'flex-start',
 }));
 
 export default function CampaignsControl() {
+  const MAX_DATE = '2099-12-31';
+  const MIN_DATE = '1900-01-01';
+
+
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const [startValue, setStartValue] = React.useState(dayjs(MIN_DATE));
+  const [endValue, setEndValue] = React.useState(dayjs(MAX_DATE));
+
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -149,13 +156,19 @@ export default function CampaignsControl() {
     setOpen(false);
   };
 
+  const filterEndDate = (date) => {return dayjs(date.endDate) <= endValue};
 
+  const filterStartDate = (item) => {return  dayjs(item.startDate) >= startValue};
+
+  const filterDate = (item) => {return  dayjs(item.startDate) <= dayjs(item.endDate)};
+
+  const filterSearch = (item) => {return item.name.includes(search)};
 
   const [Campaigns, setCampaigns] = useState([]);
 
   useEffect(() => {
     function handleAddCampaigns(evt) {
-      setCampaigns(prevState => [...prevState, ...evt.detail]);
+      setCampaigns(prevState => [...prevState, ...evt.detail])
     }
 
     window.addEventListener('AddCampaigns', handleAddCampaigns);
@@ -167,12 +180,13 @@ export default function CampaignsControl() {
   return (
     <div className="Campaigns">
 
-
-
       <Box sx={{ height: 635, width: '100%' }}>
-        
+
         <DataGrid
-          rows={Campaigns}
+          rows={Campaigns.filter(filterSearch)
+            .filter(filterStartDate)
+            .filter(filterEndDate)
+            .filter(filterDate)}
           columns={columns}
           initialState={{
             pagination: {
@@ -184,26 +198,27 @@ export default function CampaignsControl() {
           pageSizeOptions={[9]}
           disableRowSelectionOnClick
 
-          
+
         />
 
         <CssBaseline />
         <AppBar position="fixed" open={open}>
           <Toolbar>
             <Typography variant="h6" noWrap sx={{ flexGrow: 1 }} component="div">
-              
-          Campaigns
+
+              Campaigns
 
             </Typography>
             <Search>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search…"
-              inputProps={{ 'aria-label': 'search' }}
-            />
-          </Search>
+              <SearchIconWrapper>
+                <SearchIcon />
+              </SearchIconWrapper>
+              <StyledInputBase
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search…"
+                inputProps={{ 'aria-label': 'search' }}
+              />
+            </Search>
             <IconButton
               color="inherit"
               aria-label="open drawer"
@@ -218,6 +233,7 @@ export default function CampaignsControl() {
         <Main open={open}>
 
         </Main>
+
         <Drawer
           sx={{
             width: drawerWidth,
@@ -230,12 +246,38 @@ export default function CampaignsControl() {
           anchor="right"
           open={open}
         >
+
           <DrawerHeader>
             <IconButton onClick={handleDrawerClose}>
               {theme.direction === 'rtl' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </IconButton>
+            Choose start and end date
           </DrawerHeader>
+
           <Divider />
+          
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+
+            <DatePicker
+              inputProps={{ readOnly: true }}
+              label="Start Date"
+              value={startValue}
+              maxDate={endValue}
+              onChange={(newValue) => setStartValue(newValue)}
+            />
+
+            <div style={{ height: 20 }} />
+
+            <DatePicker
+              
+              inputProps={{ readOnly: true }}
+              label="End Date"
+              minDate={startValue}
+              value={endValue}
+              onChange={(newValue) => setEndValue(newValue)}
+            />
+
+          </LocalizationProvider>
 
         </Drawer>
 
