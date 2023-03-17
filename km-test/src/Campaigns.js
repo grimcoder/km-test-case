@@ -162,7 +162,7 @@ export default function CampaignsControl() {
 
   const filterDate = (item) => {return  dayjs(item.startDate) <= dayjs(item.endDate)};
 
-  const filterSearch = (item) => {return item.name.includes(search)};
+  const filterSearch = (item) => {return item.name.toLowerCase().includes(search.toLowerCase())};
 
   const [Campaigns, setCampaigns] = useState([]);
 
@@ -197,8 +197,6 @@ export default function CampaignsControl() {
           }}
           pageSizeOptions={[9]}
           disableRowSelectionOnClick
-
-
         />
 
         <CssBaseline />
