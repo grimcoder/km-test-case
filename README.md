@@ -1,6 +1,6 @@
 # test app
 
-##After cloning code just 
+## After cloning code just 
 
 cd km-test  
 npm install 
